@@ -1,5 +1,5 @@
 import os
-os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+os.environ["DATABASE_URL"] = "postgresql+psycopg://taskboard:taskboard@localhost:5433/taskboard"
 
 from fastapi.testclient import TestClient
 from app.main import app
