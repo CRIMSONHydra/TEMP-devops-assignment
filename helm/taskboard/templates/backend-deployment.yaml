@@ -10,13 +10,21 @@ spec:
     metadata:
       labels: {app: taskboard-backend}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image }}:{{ .Values.backend.tag }}"
           ports: [{containerPort: 8000}]
           env:
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: taskboard-postgres, key: username}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: taskboard-postgres, key: password}}
             - name: DATABASE_URL
-              value: "postgresql+psycopg://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}:5432/{{ .Values.postgres.database }}"
+              value: "postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ .Values.postgres.host }}:5432/{{ .Values.postgres.database }}"
           readinessProbe:
             httpGet: {path: /ready, port: 8000}
             initialDelaySeconds: 10
