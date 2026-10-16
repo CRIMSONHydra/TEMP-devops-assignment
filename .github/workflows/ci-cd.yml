@@ -59,25 +59,3 @@ jobs:
         run: |
           docker push ghcr.io/${{ env.OWNER }}/taskboard-backend:${{ github.sha }}
           docker push ghcr.io/${{ env.OWNER }}/taskboard-frontend:${{ github.sha }}
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build-scan-push
-    runs-on: ubuntu-latest
-    permissions: {contents: read, packages: read}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set lowercase image owner
-        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
-      - uses: azure/setup-helm@v4
-      - name: Configure kubectl
-        env: {KUBE_CONFIG_DATA: '${{ secrets.KUBE_CONFIG_DATA }}'}
-        run: |
-          mkdir -p ~/.kube
-          echo "$KUBE_CONFIG_DATA" | base64 -d > ~/.kube/config
-      - name: Deploy with Helm
-        run: |
-          helm upgrade --install taskboard ./helm/taskboard -n taskboard --create-namespace \
-            --set backend.tag=${{ github.sha }} \
-            --set frontend.tag=${{ github.sha }} \
-            --set backend.image=ghcr.io/${{ env.OWNER }}/taskboard-backend \
-            --set frontend.image=ghcr.io/${{ env.OWNER }}/taskboard-frontend
